@@ -166,6 +166,8 @@ public class Main {
                     for (String pass : nursePass) {
                         if (userPassInput.equals(pass)) {
                             typewrite("Login Successful!");
+                            Nurse nurse = new Nurse();
+                            addNurseInfo(conn, nurse, nurseEmail);
                         } else{
                             typewrite("Password Incorrect");
                         }
@@ -175,10 +177,21 @@ public class Main {
         }
     }
 
+    public static void addNurseInfo(Connection conn, Nurse nurse, String nurse_email) throws SQLException {
+        String sqlStatement = "SELECT * FROM nurse_info WHERE nurse_email = '" + nurse_email + "';";
+        Statement stmt = conn.createStatement();
+        ResultSet rs1 = stmt.executeQuery(sqlStatement);
+        while (rs1.next()){
+            nurse.nurse_first_name = rs1.getString("nurse_first_name");
+            nurse.nurse_last_name = rs1.getString("nurse_last_name");
+            nurse.nurse_email = nurse_email;
+            rs1.close();
+        }
+    }
+
     public static void insertNurse(String first, String last, String email, String pass, Connection conn) throws SQLException {
         String insertSql = "INSERT INTO nurse_info(nurse_first_name, nurse_last_name, nurse_email, nurse_pass)" +
                 "VALUES ('" + first + "', '" + last + "', '" + email + "', '" + pass + "');";
-        Statement stmt = conn.createStatement();
         PreparedStatement preStmt = conn.prepareStatement(insertSql);
         preStmt.execute();
         System.out.println("Successfully added nurse");
