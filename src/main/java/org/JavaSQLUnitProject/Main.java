@@ -22,18 +22,87 @@ public class Main {
         System.out.print("> ");
         Scanner loginInput = new Scanner(System.in);
         String answerFromLoginInput = loginInput.nextLine();
-        if (Objects.equals(answerFromLoginInput, "Nurse")) {
+        if (Objects.equals(answerFromLoginInput, "Nurse") || Objects.equals(answerFromLoginInput, "nurse")) {
             typewrite("Login or Register?");
             System.out.print("> ");
             Scanner loginRegisterNurseInput = new Scanner(System.in);
             String answerFromLoginRegisterNurseInput = loginRegisterNurseInput.nextLine();
-            if (Objects.equals(answerFromLoginRegisterNurseInput, "Login")) {
+            if (Objects.equals(answerFromLoginRegisterNurseInput, "Login") || Objects.equals(answerFromLoginRegisterNurseInput, "login")) {
                 loginAsNurse(conn);
-            } else if (Objects.equals(answerFromLoginRegisterNurseInput, "Register")) {
+            } else if (Objects.equals(answerFromLoginRegisterNurseInput, "Register") || Objects.equals(answerFromLoginRegisterNurseInput, "register")) {
                 registerNewNurse(conn);
             }
-        } else if (Objects.equals(answerFromLoginInput, "Patient")) {
-            System.out.println("Not yet available");
+        } else if (Objects.equals(answerFromLoginInput, "Patient") || Objects.equals(answerFromLoginInput, "patient")) {
+            typewrite("Login or Register");
+            System.out.print(">");
+            Scanner loginRegisterPatient = new Scanner(System.in);
+            String answerFromLoginRegisterPatient = loginRegisterPatient.nextLine();
+            if (Objects.equals(answerFromLoginRegisterPatient, "Login")){
+                loginAsPatient(conn);
+            } else if (Objects.equals(answerFromLoginRegisterPatient, "Register")) {
+                registerNewPatient(conn);
+            }
+        }
+
+    }
+
+    public static void registerNewPatient(Connection conn) throws SQLException {
+        System.out.println("Redirecting");
+        typewrite(". . . . . . . .");
+        System.out.println();
+        typewriteOther("First Name: ");
+        Scanner firstNameInput = new Scanner(System.in);
+        String UserFirstNameInput = firstNameInput.nextLine();
+        System.out.println(UserFirstNameInput);
+        System.out.println();
+        typewriteOther("Last Name: ");
+        Scanner lastNameInput = new Scanner(System.in);
+        String UserLastNameInput = lastNameInput.nextLine();
+        System.out.println();
+        typewriteOther("Email: ");
+        Scanner emailInput = new Scanner(System.in);
+        String UserEmailInput = emailInput.nextLine();
+        System.out.println();
+        typewriteOther("Password: ");
+        Scanner passInput = new Scanner(System.in);
+        String UserPassInput = passInput.nextLine();
+        insertPatient(UserFirstNameInput, UserLastNameInput, UserEmailInput, UserPassInput, conn);
+    }
+
+    public static void insertPatient(String first, String last, String email, String pass, Connection conn) throws SQLException {
+        String insertSql = "INSERT INTO patient_info(patient_first_name, patient_last_name, patient_email, patient_pass)" +
+                "VALUES ('" + first + "', '" + last + "', '" + email + "', '" + pass + "');";
+        PreparedStatement preStmt = conn.prepareStatement(insertSql);
+        preStmt.execute();
+        System.out.println("Successfully added patient");
+    }
+
+    public static void loginAsPatient(Connection conn) throws SQLException {
+        typewrite("Please input your email associated with account");
+        System.out.print("> ");
+        Scanner emailInputPatient = new Scanner(System.in);
+        String answerEmailInputPatient = emailInputPatient.nextLine();
+        String getNurseInfo = "SELECT * FROM patient_info";
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(getNurseInfo);
+        while (rs.next()){
+            String[] patientEmails = new String[]{rs.getString("patient_email")};
+            String[] patientPass = new String[]{rs.getString("patient_pass")};
+            for (String Email : patientEmails) {
+                if (answerEmailInputPatient.equals(Email)) {
+                    typewrite("Please input password associated with account");
+                    System.out.print("> ");
+                    Scanner passInput = new Scanner(System.in);
+                    String userPassInput = passInput.nextLine();
+                    for (String pass : patientPass) {
+                        if (userPassInput.equals(pass)) {
+                            typewrite("Login Successful!");
+                        } else{
+                            typewrite("Password Incorrect");
+                        }
+                    }
+                }
+            }
         }
 
     }
@@ -101,8 +170,6 @@ public class Main {
                             typewrite("Password Incorrect");
                         }
                     }
-                } else {
-                    typewrite("Could not find email. Please check typing or register new account");
                 }
             }
         }
