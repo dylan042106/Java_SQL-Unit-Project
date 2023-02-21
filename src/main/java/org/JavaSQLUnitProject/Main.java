@@ -219,15 +219,15 @@ public class Main {
         System.out.print("> ");
         Scanner input = new Scanner(System.in);
         String answerInput = input.nextLine();
-        if (answerInput.equals("1")){
-            reasonForVisitPatient(conn, p);
-        } else if (answerInput.equals("2")) {
-            yourNursePatient(conn, p);
-        } else if (answerInput.equals("3")){
-            System.out.println();
-            typewrite("Logged out Successfully");
-            System.out.println();
-            LoginAndRegistration(conn);
+        switch (answerInput) {
+            case "1" -> reasonForVisitPatient(conn, p);
+            case "2" -> yourNursePatient(conn, p);
+            case "3" -> {
+                System.out.println();
+                typewrite("Logged out Successfully");
+                System.out.println();
+                LoginAndRegistration(conn);
+            }
         }
     }
     public static void yourNursePatient(Connection conn, Patient p) throws SQLException {
@@ -284,26 +284,28 @@ public class Main {
             System.out.print("> ");
             Scanner input = new Scanner(System.in);
             String answerInput = input.nextLine();
-            if (answerInput.equals("2")) {
-                typewrite("Your current Patients:");
-                System.out.println();
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT * FROM patient_info WHERE nurse_id = " + n.nurse_id + ";");
-                while (rs.next()) {
-                    String patient_first_name = rs.getString("patient_first_name");
-                    String patient_last_name = rs.getString("patient_last_name");
-                    String patient_reason = rs.getString("reason");
-                    typewrite(patient_first_name + " " + patient_last_name);
-                    typewrite("Reason For Visit: " + patient_reason);
+            switch (answerInput) {
+                case "2" -> {
+                    typewrite("Your current Patients:");
                     System.out.println();
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT * FROM patient_info WHERE nurse_id = " + n.nurse_id + ";");
+                    while (rs.next()) {
+                        String patient_first_name = rs.getString("patient_first_name");
+                        String patient_last_name = rs.getString("patient_last_name");
+                        String patient_reason = rs.getString("reason");
+                        typewrite(patient_first_name + " " + patient_last_name);
+                        typewrite("Reason For Visit: " + patient_reason);
+                        System.out.println();
+                    }
                 }
-            } else if (answerInput.equals("1")) {
-                registerNewPatient(conn, n);
-            } else if (answerInput.equals("3")) {
-                System.out.println();
-                typewrite("Logged out Successfully");
-                System.out.println();
-                LoginAndRegistration(conn);
+                case "1" -> registerNewPatient(conn, n);
+                case "3" -> {
+                    System.out.println();
+                    typewrite("Logged out Successfully");
+                    System.out.println();
+                    LoginAndRegistration(conn);
+                }
             }
         }
     }
