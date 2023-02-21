@@ -31,29 +31,27 @@ public class Main {
                 loginAsNurse(conn);
             } else if (Objects.equals(answerFromLoginRegisterNurseInput, "Register") || Objects.equals(answerFromLoginRegisterNurseInput, "register")) {
                 registerNewNurse(conn);
+            } else {
+                typewrite("Invalid Response");
+                System.out.println();
+                LoginAndRegistration(conn);
             }
         } else if (Objects.equals(answerFromLoginInput, "Patient") || Objects.equals(answerFromLoginInput, "patient")) {
-            typewrite("Login or Register");
-            System.out.print(">");
-            Scanner loginRegisterPatient = new Scanner(System.in);
-            String answerFromLoginRegisterPatient = loginRegisterPatient.nextLine();
-            if (Objects.equals(answerFromLoginRegisterPatient, "Login")){
                 loginAsPatient(conn);
-            } else if (Objects.equals(answerFromLoginRegisterPatient, "Register")) {
-                registerNewPatient(conn);
-            }
+        } else {
+            typewrite("Invalid Response");
+            LoginAndRegistration(conn);
         }
 
     }
 
-    public static void registerNewPatient(Connection conn) throws SQLException {
+    public static void registerNewPatient(Connection conn, Nurse n) throws SQLException {
         System.out.println("Redirecting");
         typewrite(". . . . . . . .");
         System.out.println();
         typewriteOther("First Name: ");
         Scanner firstNameInput = new Scanner(System.in);
         String UserFirstNameInput = firstNameInput.nextLine();
-        System.out.println(UserFirstNameInput);
         System.out.println();
         typewriteOther("Last Name: ");
         Scanner lastNameInput = new Scanner(System.in);
@@ -66,15 +64,21 @@ public class Main {
         typewriteOther("Password: ");
         Scanner passInput = new Scanner(System.in);
         String UserPassInput = passInput.nextLine();
-        insertPatient(UserFirstNameInput, UserLastNameInput, UserEmailInput, UserPassInput, conn);
+        System.out.println();
+        typewriteOther("Reason for Visit: ");
+        Scanner reasonInput = new Scanner(System.in);
+        String UserReasonInput = reasonInput.nextLine();
+        System.out.println();
+        insertPatient(UserFirstNameInput, UserLastNameInput, UserEmailInput, UserPassInput, UserReasonInput, n, conn);
     }
 
-    public static void insertPatient(String first, String last, String email, String pass, Connection conn) throws SQLException {
-        String insertSql = "INSERT INTO patient_info(patient_first_name, patient_last_name, patient_email, patient_pass)" +
-                "VALUES ('" + first + "', '" + last + "', '" + email + "', '" + pass + "');";
+    public static void insertPatient(String first, String last, String email, String pass, String reason, Nurse n, Connection conn) throws SQLException {
+        String insertSql = "INSERT INTO patient_info(patient_first_name, patient_last_name, patient_email, patient_pass, nurse_id, reason)" +
+                "VALUES ('" + first + "', '" + last + "', '" + email + "', '" + pass + "', " + n.nurse_id + ", '" + reason + "');";
         PreparedStatement preStmt = conn.prepareStatement(insertSql);
         preStmt.execute();
         System.out.println("Successfully added patient");
+        System.out.println();
     }
 
     public static void loginAsPatient(Connection conn) throws SQLException {
@@ -97,14 +101,20 @@ public class Main {
                     for (String pass : patientPass) {
                         if (userPassInput.equals(pass)) {
                             typewrite("Login Successful!");
+                            Patient patient = new Patient();
+                            addPatientInfo(conn, patient, Email);
                         } else{
                             typewrite("Password Incorrect");
+                            System.out.println();
+                            loginAsPatient(conn);
                         }
                     }
                 }
             }
         }
-
+        typewrite("Email Not Found");
+        System.out.println();
+        loginAsPatient(conn);
     }
 
     public static void registerNewNurse(Connection conn) throws SQLException {
@@ -138,9 +148,12 @@ public class Main {
                 typewriteOther("Password: ");
                 Scanner passInput = new Scanner(System.in);
                 String UserPassInput = passInput.nextLine();
+                System.out.println();
                 insertNurse(UserFirstNameInput, UserLastNameInput, UserEmailInput, UserPassInput, conn);
             } else {
-                System.out.println("Incorrect Code");
+                typewrite("Incorrect Registration Code");
+                System.out.println();
+                registerNewNurse(conn);
             }
         }
 
@@ -159,7 +172,7 @@ public class Main {
             String[] nursePass = new String[]{rs.getString("nurse_pass")};
             for (String nurseEmail : nurseEmails) {
                 if (userInputEmail.equals(nurseEmail)) {
-                    typewrite("Please input password associated with account");
+                    typewrite("Please input password associated with your account");
                     System.out.print("> ");
                     Scanner passInput = new Scanner(System.in);
                     String userPassInput = passInput.nextLine();
@@ -170,22 +183,79 @@ public class Main {
                             addNurseInfo(conn, nurse, nurseEmail);
                         } else{
                             typewrite("Password Incorrect");
+                            System.out.println();
+                            loginAsNurse(conn);
                         }
                     }
                 }
             }
         }
+        typewrite("Email Not Found");
+        System.out.println();
+        loginAsNurse(conn);
+    }
+    public static void addPatientInfo(Connection conn, Patient patient, String patient_email) throws SQLException {
+        String sqlStatement = "SELECT * FROM patient_info WHERE patient_email = '" + patient_email + "';";
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(sqlStatement);
+        while (rs.next()) {
+            patient.reason = rs.getString("reason");
+            patient.id = rs.getString("nurse_id");
+            patient.first_name = rs.getString("patient_first_name");
+            patient.last_name = rs.getString("patient_last_name");
+            patient.email = patient_email;
+            successfullyLoggedInAsPatient(conn, patient);
+        }
     }
 
+    public static void successfullyLoggedInAsPatient(Connection conn, Patient p) throws SQLException {
+        System.out.println();
+        typewrite("Welcome " + p.first_name);
+        typewrite("What would you like to do?");
+        System.out.println();
+        typewrite("1.) View Reason For Visit");
+        typewrite("2.) View Your Nurse");
+        typewrite("3.) Logout");
+        System.out.print("> ");
+        Scanner input = new Scanner(System.in);
+        String answerInput = input.nextLine();
+        if (answerInput.equals("1")){
+            reasonForVisitPatient(conn, p);
+        } else if (answerInput.equals("2")) {
+            yourNursePatient(conn, p);
+        } else if (answerInput.equals("3")){
+            System.out.println();
+            typewrite("Logged out Successfully");
+            System.out.println();
+            LoginAndRegistration(conn);
+        }
+    }
+    public static void yourNursePatient(Connection conn, Patient p) throws SQLException {
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM nurse_info WHERE nurse_id = " + p.id + ";");
+        while (rs.next()){
+            String nurse_first = rs.getString("nurse_first_name");
+            String nurse_last = rs.getString("nurse_last_name");
+            typewrite("Your current Nurse is " + nurse_first + " " + nurse_last);
+            System.out.println();
+            successfullyLoggedInAsPatient(conn, p);
+        }
+    }
+    public static void reasonForVisitPatient(Connection conn, Patient p) throws SQLException {
+        typewrite("Reason for " + p.first_name + "'s Visit: " + p.reason);
+        System.out.println();
+        successfullyLoggedInAsPatient(conn, p);
+    }
     public static void addNurseInfo(Connection conn, Nurse nurse, String nurse_email) throws SQLException {
         String sqlStatement = "SELECT * FROM nurse_info WHERE nurse_email = '" + nurse_email + "';";
         Statement stmt = conn.createStatement();
         ResultSet rs1 = stmt.executeQuery(sqlStatement);
         while (rs1.next()){
+            nurse.nurse_id = rs1.getString("nurse_id");
             nurse.nurse_first_name = rs1.getString("nurse_first_name");
             nurse.nurse_last_name = rs1.getString("nurse_last_name");
             nurse.nurse_email = nurse_email;
-            rs1.close();
+            successfullyLoggedIn(nurse, conn);
         }
     }
 
@@ -194,9 +264,49 @@ public class Main {
                 "VALUES ('" + first + "', '" + last + "', '" + email + "', '" + pass + "');";
         PreparedStatement preStmt = conn.prepareStatement(insertSql);
         preStmt.execute();
-        System.out.println("Successfully added nurse");
+        typewrite("Successfully added nurse");
+        System.out.println();
     }
-    
+
+    public static void successfullyLoggedIn(Nurse n, Connection conn) throws SQLException {
+        System.out.println();
+        typewrite("Welcome " + n.nurse_first_name);
+        typewrite("What would you like to do?");
+        System.out.println();
+        mainActionsNurse(conn, n);
+    }
+
+    public static void mainActionsNurse(Connection conn, Nurse n) throws SQLException {
+        while (true) {
+            typewrite("1.) Add New Patient Record");
+            typewrite("2.) View All Patients");
+            typewrite("3.) Logout");
+            System.out.print("> ");
+            Scanner input = new Scanner(System.in);
+            String answerInput = input.nextLine();
+            if (answerInput.equals("2")) {
+                typewrite("Your current Patients:");
+                System.out.println();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM patient_info WHERE nurse_id = " + n.nurse_id + ";");
+                while (rs.next()) {
+                    String patient_first_name = rs.getString("patient_first_name");
+                    String patient_last_name = rs.getString("patient_last_name");
+                    String patient_reason = rs.getString("reason");
+                    typewrite(patient_first_name + " " + patient_last_name);
+                    typewrite("Reason For Visit: " + patient_reason);
+                    System.out.println();
+                }
+            } else if (answerInput.equals("1")) {
+                registerNewPatient(conn, n);
+            } else if (answerInput.equals("3")) {
+                System.out.println();
+                typewrite("Logged out Successfully");
+                System.out.println();
+                LoginAndRegistration(conn);
+            }
+        }
+    }
     public static void typewrite(String input) {
         for (int i = 0; i < input.length(); i++) {
             System.out.print(input.charAt(i));
